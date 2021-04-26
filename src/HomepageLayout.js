@@ -7,7 +7,10 @@ import PropTypes from 'prop-types'
 import React, { Component, useEffect, useState } from 'react'
 import axios from 'axios';
 import {
+  Message,
   Button,
+  Checkbox,
+  Form,
   Container,
   Divider,
   Grid,
@@ -224,18 +227,55 @@ ResponsiveContainer.propTypes = {
   children: PropTypes.node,
 }
 
+//
+
 const HomepageLayout = () => {
-  let [ data, setData ] = useState(null);
+  let [ data, setData ] = useState(null);  
+  let [ file, setFile ] = useState(null);  
+  let [ hideFormSuccess, setHideFormSuccess] = useState(true);
+  let [ userInput, setUserInput ] = useState({
+    email: '',
+    subject: '',
+    message: ''
+  });
+
+  const handleSubmit = (event, data) => {
+    let URL = '/api/submit';
+    let formData = new FormData();
+    let payload = { ... userInput };
+    // console.log(file);
+    // return;
+    formData.append('file', file);
+    formData.append('email', payload.email);
+    formData.append('subject', payload.subject);
+    formData.append('message', payload.message);    
+
+    axios.post(URL, formData, {
+      headers: { "Content-Type": "multipart/form-data" }
+    })
+    .then(resp => {
+      setHideFormSuccess(false)
+    })
+    .catch(e => console.error(e));    
+  }
+  const  handleChange = (e, {name, value}) => {        
+    setUserInput(Object.assign(userInput, { [name]: value }))
+  }
+
+  const fileEvent = (e) => {
+    setFile(e.target.files[0]);
+  }
 
   useEffect(() => {
     let URL = '/api';
     axios.get(URL)
     .then(resp => {
-      setData(resp.data);      
-      console.log(resp.data);
+      setData(resp.data);            
     })
     .catch(e => console.error(e));
   }, []);  
+
+
   return (
     <React.Fragment>
     {
@@ -345,6 +385,39 @@ const HomepageLayout = () => {
                 </Grid.Column>
               </Grid.Row>
             </Grid>
+          </Container>
+        </Segment>
+
+        <Segment inverted vertical>
+          <Container>        
+            <Header as='h3' style={{ fontSize: '2em' }} inverted>
+              Contactez-nous
+            </Header>
+            <Message
+              success
+              hidden={hideFormSuccess}
+              header='Top!'
+              content="Merci pour votre message"
+            />               
+            <Form onSubmit={handleSubmit} autocomplete="off">
+              <Form.Field>
+                <label style={{ color: 'white'}}>Email</label>
+                <Form.Input placeholder='Email' name="email" onChange={handleChange}/>
+              </Form.Field>
+              <Form.Field>
+                <label style={{ color: 'white'}}>Objet</label>
+                <Form.Input placeholder='Objet' name="subject" onChange={handleChange}  />
+              </Form.Field>
+              <Form.Field>
+                <label style={{ color: 'white'}}>Message</label>
+                <Form.TextArea label='Message' placeholder='Votre message...'  name="message" onChange={handleChange}  />
+              </Form.Field>
+              <Form.Field>
+                <label style={{ color: 'white'}}>Document</label>
+                <Form.Input type="file"  name="message" onChange={fileEvent}  />
+              </Form.Field>              
+              <Button type='submit'>Envoyer</Button>
+            </Form>            
           </Container>
         </Segment>
       </ResponsiveContainer>
